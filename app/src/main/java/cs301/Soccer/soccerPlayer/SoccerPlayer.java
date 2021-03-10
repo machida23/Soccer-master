@@ -52,6 +52,7 @@ public class SoccerPlayer {
     public String getLastName() {
         return lastName;
     }
+
     public int getUniform() {
         return uniformNum;
     }

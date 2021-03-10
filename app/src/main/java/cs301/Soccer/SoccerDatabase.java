@@ -15,7 +15,8 @@ import java.util.*;
 public class SoccerDatabase implements SoccerDB {
 
     // dummied up variable; you will need to change this
-    private Hashtable database;
+    private Hashtable<String, SoccerPlayer> playerStats = new Hashtable<String, SoccerPlayer>();
+
 
     /**
      * add a player
@@ -25,7 +26,15 @@ public class SoccerDatabase implements SoccerDB {
     @Override
     public boolean addPlayer(String firstName, String lastName,
                              int uniformNumber, String teamName) {
-        return false;
+
+        String name = firstName + "##" + lastName;
+
+        if(playerStats.containsKey(name)){
+            return false;
+        }
+            SoccerPlayer addPlayer = new SoccerPlayer(firstName,lastName,uniformNumber,teamName);
+            playerStats.put(name, addPlayer);
+           return true;
     }
 
     /**
@@ -35,6 +44,12 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
     public boolean removePlayer(String firstName, String lastName) {
+        String name = firstName + "##" + lastName;
+
+        if(playerStats.containsKey(name)){
+           playerStats.remove(name);
+            return true;
+        }
         return false;
     }
 
@@ -45,7 +60,12 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
     public SoccerPlayer getPlayer(String firstName, String lastName) {
-        return null;
+        String name = firstName + "##" + lastName;
+
+        if(playerStats.containsKey(name)){
+            return playerStats.get(name);
+        }
+            return null;
     }
 
     /**
@@ -55,6 +75,12 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
     public boolean bumpGoals(String firstName, String lastName) {
+        String name = firstName + "##" + lastName;
+        SoccerPlayer player = getPlayer(firstName,lastName);
+        if(player != null){
+            player.bumpGoals();
+            return true;
+        }
         return false;
     }
 
@@ -65,6 +91,12 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
     public boolean bumpYellowCards(String firstName, String lastName) {
+        String name = firstName + "##" + lastName;
+        SoccerPlayer player = getPlayer(firstName,lastName);
+        if(player != null){
+            player.bumpYellowCards();
+            return true;
+        }
         return false;
     }
 
@@ -75,6 +107,12 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
     public boolean bumpRedCards(String firstName, String lastName) {
+        String name = firstName + "##" + lastName;
+        SoccerPlayer player = getPlayer(firstName,lastName);
+        if(player != null){
+            player.bumpRedCards();
+            return true;
+        }
         return false;
     }
 
@@ -86,7 +124,18 @@ public class SoccerDatabase implements SoccerDB {
     @Override
     // report number of players on a given team (or all players, if null)
     public int numPlayers(String teamName) {
-        return -1;
+
+        if(teamName == null){
+            return playerStats.size();
+        }
+        int count = 0;
+        Collection<SoccerPlayer> players = playerStats.values();
+        for (SoccerPlayer player: players){
+            if(player.getTeamName().equals(teamName)){
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -97,6 +146,27 @@ public class SoccerDatabase implements SoccerDB {
     // get the nTH player
     @Override
     public SoccerPlayer playerIndex(int idx, String teamName) {
+        if(idx >= numPlayers(teamName) || idx >= playerStats.size()){
+            return null;
+        }
+        Collection<SoccerPlayer> players = playerStats.values();
+        int teamNumber = 0;
+        int noTeam = 0;
+
+        for (SoccerPlayer player: players) {
+            if (player.getTeamName().equals(teamName)) {
+                if (idx == teamNumber) {
+                    return player;
+                }
+                teamNumber++;
+            }
+        }
+        for (SoccerPlayer player: players) {
+            if (idx == noTeam) {
+                return player;
+            }
+                noTeam++;
+        }
         return null;
     }
 
@@ -148,8 +218,8 @@ public class SoccerDatabase implements SoccerDB {
      * this is faster than restarting the app
      */
     public boolean clear() {
-        if(database != null) {
-            database.clear();
+        if(playerStats != null) {
+            playerStats.clear();
             return true;
         }
         return false;
