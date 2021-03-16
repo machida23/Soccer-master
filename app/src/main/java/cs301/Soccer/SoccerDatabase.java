@@ -1,8 +1,18 @@
 package cs301.Soccer;
 
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import cs301.Soccer.soccerPlayer.SoccerPlayer;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -176,9 +186,59 @@ public class SoccerDatabase implements SoccerDB {
      * @see SoccerDB#readData(java.io.File)
      */
     // read data from file
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public boolean readData(File file) {
-        return file.exists();
+
+        try {
+            Scanner reader = new Scanner(file);
+
+            while(reader.hasNextLine()) {
+                // read each line
+                String firstName = reader.nextLine();
+                String lastName = reader.nextLine();
+                String teamName = reader.nextLine();
+                String uniform = reader.nextLine();
+                String goals = reader.nextLine();
+                String yellowCard = reader.nextLine();
+                String redCard = reader.nextLine();
+
+                // convert each line from an Integer to int
+                int uniformNum = Integer.parseInt(uniform);
+                int goalsNum = Integer.parseInt(goals);
+                int yellowCardNum = Integer.parseInt(yellowCard);
+                int redCardNum = Integer.parseInt(redCard);
+
+                // add new player
+                SoccerPlayer player = new SoccerPlayer(firstName,lastName,uniformNum,teamName);
+                String name = firstName + "##" + lastName;
+
+                // if player already exists, replace it
+                // otherwise, add new element to hashtable
+                if(playerStats.containsKey(name)) {
+                    playerStats.replace(name, player);
+                }
+                else{
+                    playerStats.put(name,player);
+                }
+
+                // update goals, red cards, and yellow cards manually
+                for(int i = 0; i < goalsNum; i++){
+                    player.bumpGoals();
+                }
+                for(int i = 0; i < redCardNum; i++){
+                    player.bumpRedCards();
+                }
+                for(int i = 0; i < yellowCardNum; i++){
+                    player.bumpYellowCards();
+                }
+            }
+            return true;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
@@ -189,7 +249,29 @@ public class SoccerDatabase implements SoccerDB {
     // write data to file
     @Override
     public boolean writeData(File file) {
-        return false;
+
+        PrintWriter printWriter;
+
+        try {
+            printWriter = new PrintWriter(file);
+
+        } catch (FileNotFoundException e) {
+            return false;
+        }
+        Collection<SoccerPlayer> players = playerStats.values();
+        for(SoccerPlayer player: players){
+
+            printWriter.println(logString(player.getFirstName()));
+            printWriter.println(logString(player.getLastName()));
+            printWriter.println(logString(player.getTeamName()));
+            printWriter.println(logString(String.valueOf(player.getUniform())));
+            printWriter.println(logString(String.valueOf(player.getGoals())));
+            printWriter.println(logString(String.valueOf(player.getYellowCards())));
+            printWriter.println(logString(String.valueOf(player.getRedCards())));
+        }
+        printWriter.close();
+        return true;
+
     }
 
     /**
@@ -202,6 +284,7 @@ public class SoccerDatabase implements SoccerDB {
         return s;
     }
 
+
     /**
      * returns the list of team names in the database
      *
@@ -210,7 +293,13 @@ public class SoccerDatabase implements SoccerDB {
     // return list of teams
     @Override
     public HashSet<String> getTeams() {
-        return new HashSet<String>();
+       HashSet<String> hashSet = new HashSet<String>();
+       Collection<SoccerPlayer> players = playerStats.values();
+
+       for(SoccerPlayer player: players){
+           hashSet.add(player.getTeamName());
+       }
+       return hashSet;
     }
 
     /**
